@@ -1,0 +1,321 @@
+<?php
+
+include('dbFunctions.php');
+include_once("user.php");
+include("orderDisplay.php");
+
+//
+// sortHeader() - a little helper function to format a header with sorting.
+//
+function sortHeader($basepage,$label,$field,$fieldNow,$reverseNow,$all)
+{
+     $retVal = "<a href=\"$basepage&sort=$field";
+	  
+     if($all) {
+	  $retVal .= "&all";
+     }
+
+     if($fieldNow == $field && !$reverseNow) {
+	  $retVal .= "&reverse";
+     }
+     if($fieldNow == $field) {
+	  $retVal .= "\"><strong>$label</strong></a>";
+     } else {
+	  $retVal .= "\">$label</a>";
+     }
+
+     return($retVal);
+}
+
+//
+// showAllButton() - much like showHeader() compose a piece of HTML for
+//		     use within the order table to allow the user to
+//		     click to include/exclude canceled and shipped orders.
+//
+function showAllButton($basepage,$sort,$reverse,$all)
+{
+     $retVal  = "<tr class=\"botline\"><td colspan=13 align=\"right\">\n";
+     $retVal .= "<a href=\"$basepage&sort=$sort";
+
+     if($reverse) {
+	  $retVal .= "&reverse";
+     }
+
+     if(!$all) {
+	  $retVal .= "&all";
+     }
+
+     $retVal .= "\"><em>Click here to ";
+     if($all) {
+	  $retVal .= "exclude";
+     } else {
+	  $retVal .= "include";
+     }
+
+     $retVal .= " shipped and canceled orders.</em></a></td></tr>";
+
+     return($retVal);
+}
+
+//
+// getOrdersSummary() - a front-end to dbGetOrdersSummary that changes
+//			the concept of "reverse" depending up on the
+//			field that is being sorted upon.  This has the
+//			effect of having some fields with a DEFAULT
+//			sort of reverse.
+//
+function getOrdersSummary($sort,$reverse,$all)
+{
+     switch($sort) {
+     case "PaidDate":
+     case "ReleasedToShipping":
+     case "ShippedDate":
+     case "IsExpedited":
+     case "RequestedPay":
+     case "Charity":
+	  $reverse = !$reverse;
+	  break;
+     }
+
+     return(dbGetOrdersSummary($sort,$reverse,$all));
+}
+
+
+//
+// populateListOrderSummary() - generates an HTML table with a list of the orders.  Only the outstanding
+//				(not-shipped and not canceled) orders are shown unless $all is true.
+//
+function populateListOrderSummary($linkPage,$sort = "OrderedDate",$reverse = false,$all = false)
+{
+     $charityHeader = standardIcon("charity");
+     $toShipHeader = standardIcon("released");
+     $paidHeader = standardIcon("paid");
+     $expediteHeader = standardIcon("expedite");
+     $shippedHeader = standardIcon("shipped");
+     $invoiceHeader = standardIcon("invoice");
+
+     $checkedBox = standardIcon("checkedBox");
+     $unCheckedBox = standardIcon("box");
+
+     $basepage = "?page_id=" . $_GET["page_id"];
+
+     $rows = getOrdersSummary($sort,$reverse,$all); 
+
+     $list = "<h3>Current Orders</h3>";
+
+     $list .= '<script>
+               // code taken from http://stackoverflow.com/questions/133925/javascript-post-request-like-a-form-submit
+               function post(path, params, method) {
+                  method = method || "post"; // Set method to post by default if not specified.
+
+                  var form = document.createElement("form");
+                  form.setAttribute("method", method);
+                  form.setAttribute("action", path);
+
+                  for(var key in params) {
+                     if(params.hasOwnProperty(key)) {
+                        var hiddenField = document.createElement("input");
+                        hiddenField.setAttribute("type", "hidden");
+                        hiddenField.setAttribute("name", key);
+                        hiddenField.setAttribute("value", params[key]);
+ 
+                        form.appendChild(hiddenField);
+                     }
+                  }
+
+                  document.body.appendChild(form);
+                  form.submit();
+               }';
+     $list .= "
+               function rowClick(oid) {
+//                  window.location.href = \"http://orders.thechapr.com/Admin/?page_id=89&oid=\" + oid;
+                  window.location.href = \"$linkPage\" + \"&oid=\" + oid;
+//                    post(\"http://orders.thechapr.com/Admin/?page_id=89\",
+//                         { email : \"eric@rothfus.com\",
+//                           fname : \"eric\"},
+//                         \"post\");
+               }
+
+               </script>";
+     
+     $list .= "<table class=\"orderList\" frame=\"box\" style=\"width:99%;align:center\">";
+     $list .= showAllButton($basepage,$sort,$reverse,$all);
+     $list .= "
+   <tr class=\"topline\">
+      <td align=\"center\"><font size=\"-2\">" . sortHeader($basepage,"CID","CID",$sort,$reverse,$all) . "</td>
+      <td align=\"center\"><font size=\"-2\">" . sortHeader($basepage,"OID","OID",$sort,$reverse,$all) . "</td>
+      <td align=\"center\">" . sortHeader($basepage,"First Name","FirstName",$sort,$reverse,$all) . "</td>
+      <td align=\"center\">" . sortHeader($basepage,"Last Name","LastName",$sort,$reverse,$all) . "</td>
+      <td align=\"center\">" . sortHeader($basepage,"Ordered Date","OrderedDate",$sort,$reverse,$all) . "</td>
+      <td align=\"center\">" . sortHeader($basepage,"Items","ItemCount",$sort,$reverse,$all) . "</td>
+      <td align=\"center\">" . sortHeader($basepage,$expediteHeader,"IsExpedited",$sort,$reverse,$all) . "</td>
+      <td align=\"center\">" . sortHeader($basepage,$charityHeader,"Charity",$sort,$reverse,$all) . "</td>
+      <td align=\"center\">" . sortHeader($basepage,$invoiceHeader,"RequestedPay",$sort,$reverse,$all) . "</td>
+      <td align=\"center\">" . sortHeader($basepage,$paidHeader,"PaidDate",$sort,$reverse,$all) . "</td>
+      <td align=\"center\">" . sortHeader($basepage,$toShipHeader,"ReleasedToShipping",$sort,$reverse,$all) . "</td>
+      <td align=\"center\">" . sortHeader($basepage,$shippedHeader,"ShippedDate",$sort,$reverse,$all) . "</td>
+      <td align=\"center\"> Order Notes </td>
+   </tr>
+
+";
+
+     // these are counters for the bottom of page reporting
+     // canceled orders are never counted in this list - but shipped are as detailed below
+
+     $totalItemCount = 0;		// total of all items in the current list
+     $totalCharityCount = 0;		// total of charity items in the current list (non charity = $totalItemCount - $totalCharityCount)
+     $totalItemsShipped = 0;		// total of SHIPPED items in the current list (only shown when shipped shown)
+     $totalCharityShipped = 0;		// total of charity shipped items in the current list (only shown when shipped shown)
+
+  foreach($rows as $row) {
+
+    $canceled = $row["WasCanceled"];
+    $cid = $row["CID"];
+    $oid = $row["OID"];
+    $firstName = $row["FirstName"];
+    $lastName = $row["LastName"];
+    $orderDate = date("Y-M-d",$row["OrderedDate"]);
+    $itemCount = $row["itemCount"];
+    $paidDate = $row["PaidDate"];
+    $toShipDate = $row["ReleasedToShipping"];
+    $shippedDate = $row["ShippedDate"];
+    $isExpedited = $row["IsExpedited"];
+    $orderNotes = $row["CustomerONotes"];
+    if($row["AdminONotes"]) {
+	 $orderNotes .= " <em>(" . $row["AdminONotes"] . ")</em>";
+    }
+    $isCharity = $row["Charity"];
+    $isInvoice = $row["RequestedPay"];
+
+    // do the bottom of page item counts
+    if(!$canceled) {
+	 $totalItemCount += $row["itemCount"];
+
+	 if($isCharity) {
+	      $totalCharityCount += $row["itemCount"];
+	 }
+	 if($shippedDate) {
+	      $totalItemsShipped += $row["itemCount"];
+	 }
+	 if($shippedDate && $isCharity) {
+	      $totalCharityShipped += $row["itemCount"];
+	 }
+    }
+
+    // the old way
+    $box = '&#9744;';  /* Empty Box special Character */
+    $checked = '&#9745;';  /* Check Box Special Character */
+
+    // new pretty way
+    $box = $unCheckedBox;
+    $checked = $checkedBox;
+
+    if($isInvoice) {
+	 $invoice = $checked;
+	 if($row["RequestedPayDays"] == 1) {
+	      $invoiceTitle = $row["RequestedPayDays"] . " day ago";
+	 } else {
+	      if($row["RequestedPayDays"] == 0) {
+		   $invoiceTitle = "just today";
+	      } else {
+		   $invoiceTitle = $row["RequestedPayDays"] . " days ago";
+	      }
+	 }
+    } else {
+	 $invoice = $box;
+	 $invoiceTitle = "";
+    }
+
+    if($paidDate == 0) {
+	 $paid = $box;
+    } else {
+	 $paid = $checked;
+    }
+
+    if($toShipDate == 0) {
+	 $released = $box;
+    } else {
+	 $released = $checked;
+    }
+
+    if($shippedDate == 0) {
+	 $shipped = $box;
+    } else {
+	 $shipped = $checked;
+    }
+
+    if($isCharity) {
+	 $charity = $checked;
+    } else {
+	 $charity = $box;
+    }
+
+    if($isExpedited) {
+	 $expedited = $checked;
+    } else {
+	 $expedited = $box;
+    }
+
+    $list .= "<tr onclick=\"rowClick($oid);\"";
+    if($canceled) {
+      $list .= " class=\"strikeout\"";
+    }
+    $list .= ">"; 
+
+    $list .= "
+
+      <td class='centered' align='center'> $cid </td>
+      <td align='center'> $oid </td>
+      <td> $firstName </td>
+      <td> $lastName </td>
+      <td align='center'> $orderDate </td>
+      <td align='center'> $itemCount </td>
+      <td align='center'> $expedited </td>
+      <td align='center'> $charity </td>
+      <td align='center' title='$invoiceTitle'> $invoice </td>
+      <td align='center'> $paid </td>
+      <td align='center'> $released </td>
+      <td align='center'> $shipped </td>
+      <td> $orderNotes </td>
+   </tr>
+
+";
+
+  }
+
+  // deal with a little link for showing ALL orders, or excluding shipped and canceled
+
+  $list .= showAllButton($basepage,$sort,$reverse,$all);
+
+$list .= "
+</table>
+<div align=\"center\"><font size=\"-1\"><em>
+Click on a row to view, edit, or ship the order.
+</em></font></div><P>";
+
+$list .= "<div align=\"center\"><font size=\"-1\"><em>";
+$list .= "<table style=\"border:none;margin:0;padding:0\">";
+$list .= "<tr style=\"border:none;margin:0;padding:0\">";
+$list .= "<td style=\"border:none;text-align:center;margin:0;padding:0\">Total Items: $totalItemCount</td>";
+$list .= "<td style=\"border:none;text-align:center;margin:0;padding:0\">Total Charity: $totalCharityCount</td>";
+$list .= "<td style=\"border:none;text-align:center;margin:0;padding:0\">Total Non-Charity: " . ($totalItemCount - $totalCharityCount) . "</td>";
+$list .= "</tr>";
+
+if($all) {
+     $list .= "<tr style=\"border:none\">";
+     $list .= "<td style=\"border:none;text-align:center;margin:0;padding:0\">Total Shipped Items: $totalItemsShipped</td>";
+     $list .= "<td style=\"border:none;text-align:center;margin:0;padding:0\">Total Shipped Charity: $totalCharityShipped</td>";
+     $list .= "<td style=\"border:none;text-align:center;margin:0;padding:0\">Total Shipped Non-Charity: " . ($totalItemsShipped - $totalCharityShipped) . "</td>";
+     $list .= "</tr>";
+}
+
+$list .= "</table></em></font></div>";
+
+ print($list);
+
+}
+
+
+
+
+?>

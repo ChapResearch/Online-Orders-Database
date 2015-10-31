@@ -1,0 +1,44 @@
+Static Tables:
+
+packages:
+
+-	PKID
+-	Package Name
+-	Price
+-	Active
+
+The packages table is a static table created and populated by a DBA. 
+It is used to provide a list of pieces that will need to be included 
+in an item order. Nothing is deleted but is instead declared 
+inactive and a new package is added. 
+
+
+
+
+
+pvp:
+
+-	PKID
+-	PID
+
+The packages table is a static table created and populated by a DBA. 
+The only purpose of this table is to keep track of which pieces go 
+in a package. 
+
+
+
+
+
+
+pieces:
+
+-	PID
+-	Active
+-	Name
+-	Abbrev
+
+The packages table is a static table created and populated by a DBA. 
+This is a list of every piece that could go into an order. Every piece
+that has ever been or ever was is included in this list. Nothing is 
+deleted but are instead declared inactive and a new piece to replace 
+it is added.

@@ -1,0 +1,20 @@
+<?php
+
+include("dbFunctions.php");
+
+$row = array( "WasCanceled" => 1,
+              "IsExpedited" => 0,
+              "OrderedDate" => '2014-10-10 10:38:44',
+	      "PaidDate" => '0000-00-00 00:00:00');
+
+echo("before:\n");
+
+print_r($row);
+
+echo("after:\n");
+
+dbOrderNormalize2PHP($row);
+
+print_r($row);
+
+?>

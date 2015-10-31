@@ -1,0 +1,76 @@
+<?php
+include_once ("htmlFunctions.php");
+
+function packageFields($data, $badFields)
+{
+  print_r("data");
+  print_r($data);
+  tableRow(array (tableData(prompt("<b>Package Name:</b>", in_array("packname", $badFields)), "right"),
+		  tableData(text($data,"packname", "", "30"), "left", "middle"),
+		  tableData(prompt("<b>Package Price:</b>", in_array("packprice", $badFields)), "right"),
+		  tableData(text($data,"packprice", "", "10"), "left", "middle"),
+		  tableData(prompt("<b>Active?</b>", in_array("active", $badFields)), "right"),
+		  tableData(checkBox($data,"active","false","YES"), "left", "middle", 3)));
+
+  $pieces = $data["pieces"];
+
+  $i = 1;
+
+  foreach ($pieces as $piece){
+    $pieceInfo = dbGetPiece($piece["PID"]);
+    print_r("pieceInfo");
+    print_r($pieceInfo);
+    $piecesOptions = dbGetPiecesNames();
+    print_r("piecesOptions");
+    print_r($piecesOptions);
+    tableRow(array (tableData(prompt("<b>Piece$i:</b>", in_array("piece$i", $badFields)), "right"),
+		    tableData(dropDown($pieceInfo, "PieceName", $piecesOptions))));
+    $i++;
+  }
+
+
+  hiddenField("PKID",$data["PKID"]);
+  print("\n\n");
+}
+
+function showPackageForm($data, $action, $badFields)
+{
+  formHeader($action, "Package Form", "packageForm", "void");
+  packageFields($data, $badFields);
+  tableRow(array (tableData(""),
+		  tableData(""),
+		  tableData(""),
+		  tableData(""),
+		  tableData(""),
+		  tableData(submit("Submit!"))));
+
+  echo(getWordpressHiddenFormField());
+
+  formFooter("packageForm");
+}  
+
+function formatForDataBase($data)
+{
+  $dbPackage["PackageName"] = $data["packname"];
+  $dbPackage["Price"] = $data["packprice"];
+  $dbPackage["Active"] = $data["active"];
+}
+
+
+function packageValidate($data)
+{
+  $badFields = array();
+
+  if (empty($data["packname"])){
+    $badFields[] = "packname";
+  }
+  if (empty($data["packprice"]) || !is_numeric($data["packprice"])){
+    $badFields[] = "packprice";
+  }
+  if (empty($data["active"])){
+    $badFields[] = "active";
+  }
+
+  return $badFields;
+}
+?>

@@ -1,0 +1,13 @@
+<?php
+
+include("paypalFns.php");
+include("dbFunctions.php");
+
+if(!paypalInvoiceSend(47)) {
+     echo("returned false\n");
+} else {
+     echo("ok\n");
+}
+
+
+?>

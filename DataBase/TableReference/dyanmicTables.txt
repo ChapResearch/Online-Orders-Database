@@ -1,0 +1,53 @@
+-----------------------------------------------------------------------------------------------------------------------------------
+customers
+-----------------------------------------------------------------------------------------------------------------------------------
+CID		: int (auto)       - 
+FirstName*	: char(20)		        - 
+LastName*	: char(20)			     -
+Email		: char(40)			   -
+Title		: char(15)			      - Mr/Mrs/Ms/Dr etc.
+Phone		: char(20)			      	   -
+Teams		: varchar(500)					   -
+Notes		: varchar(1000)
+MetDate		: small date		   - date first entered (usually the same as the date of first order)
+
+Street1		: char(40)
+Street2		: char(40)
+City		: char(20)
+State		: char(20)
+Zip	        : char(10)
+Country		: char(20)
+
+A table of all of the customers who have ordered ChapRs (charity included). Customers who have previously ordered
+are still only listed once. The first section is information that is filled out in phase one of ordering (the customer filling out a form). The second part, the shipping address, is given when the customer pays and is taken from the Paypal.
+
+
+----------------------------------------------------------------------------------------------------------------------------------
+orders
+----------------------------------------------------------------------------------------------------------------------------------
+OID		: int (auto)
+CID		: int
+OrderedDate	: int
+Notes		: text
+IsExpedited	: bool	       - if the customer is // expedited, shipping and personalities
+
+RequestedPay 	: bool         - indicates whether or not the customer has been emailed about paying
+PaidDate	: datetime 	            - shows if the customer has paid
+ShippedDate	: datetime		           
+Carrier		: char		          - which shipping company was used to ship
+TrackingNum	: int				         
+WasReceived	: BIT		- whether the customer emailed saying they got the ChapR
+WasCanceled	: BIT
+
+
+---------------------------------------------------------------------------------------------------------------------------------
+items
+---------------------------------------------------------------------------------------------------------------------------------
+IID		: int (auto)         - 
+OID		: int
+PKID		: int
+Personality	: PID
+Price		: DECIMAL(6,2)
+
+A table. Each order has multiple packages associated with it. This table links the two. Each IID is unique, but
+each OID will be repeated based on how many packages it has. Furthermore, there may be many of the same time

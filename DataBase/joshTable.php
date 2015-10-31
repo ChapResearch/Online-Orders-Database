@@ -1,0 +1,74 @@
+<?php
+
+  //
+  // db_createPackageTable() -- The packages table is a static table created and populated by a DBA.
+  //                            It is used to provide a list of pieces that will need to be included
+  //                            in an item order. Nothing is deleted but is instead declared
+  //                            inactive and a new package is added.
+  //
+
+function db_createPackagesTable($con)
+{
+  // This sets up the table with the desired information.
+  // Everything in this table is required, no exceptions.
+
+  $sql="CREATE TABLE packages
+                  (
+                    PKID SMALLINT NOT NULL AUTO_INCREMENT PRIMARY KEY,   # Key to the packages table
+                    PackageName CHAR(30) NOT NULL,                       # Name for each package
+                    Price DECIMAL(6,2) NOT NULL,                         # Price for each package
+                    Active SMALLINT NOT NULL,                            # Whether or not each package is active (0 is not active)
+                    Countable SMALLINT NOT NULL                          # Whether or not each package is counted in the summary (0 is not counted)
+                  )";
+
+  // this command actually creates the table with the above confirguration.
+  // If the table is created it returns true, if it fails to be created it returns false.
+
+  if(!execute($con,$sql,"Table 'packages' create")) {
+    return(false);
+  }
+  return(true);
+}
+
+
+  //
+  // db_createPiecesTable() -- The pieces table is a static table created and populated by a DBA.
+  //                           This is a list of every piece that could go into an order. Every piece
+  //                           that has ever been or ever was is included in this list. Nothing is
+  //                           deleted but are instead declared inactive and a new piece to replace
+  //                           it is added. All pieces have Names, PIDs, and are either Active or Inactive. 
+  //                           Every piece can also include an Abbreviation. 
+  //
+
+function db_createPiecesTable($con)
+{
+
+  // This sets up the table with the desired information.
+  // Everything in this table is required except for Abbrev.
+
+  $sql="CREATE TABLE pieces
+                  (
+                    PID SMALLINT NOT NULL AUTO_INCREMENT PRIMARY KEY,   # Key to the pieces table
+                    PieceName CHAR(30) NOT NULL,                        # Name for each piece
+                    Abbrev CHAR(10),                                    # Abbrev for each piece
+                    Active SMALLINT NOT NULL,                           # Whether or not each piece is active (0 is not active)
+                    IsPersonality SMALLINT NOT NULL			# Whether this piece is a personality or not
+                  )";
+
+  // this command actually creates the table with the above confirguration.
+  // If the table is created it returns true, if it fails to be created it returns false.
+
+  if(!execute($con,$sql,"Table 'pieces' create")) {
+    return(false);
+  }
+  return(true);
+}
+
+function joshMain($con)
+{
+  db_createPackagesTable($con);
+  db_createPiecesTable($con);
+
+}
+
+?>

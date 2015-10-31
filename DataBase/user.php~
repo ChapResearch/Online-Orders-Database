@@ -1,0 +1,42 @@
+<?php
+
+//
+// user.php - this file abstracts user stuff for the ChapR site(s)
+//		It is aware that it can be used within Wordpress
+//		and outside of Wordpress like when embedding the
+//		order form somewhere.
+
+function inWordpress()
+{
+     // if we're running within Wordpress, this class will be defined
+
+     return(class_exists("WP_User"));
+}
+
+//
+// userLoggedIn() - returns TRUE if the user is logged in, and FALSE
+//		    otherwise.  This is safe to call either within
+//                  Wordpress or not.
+//
+function userLoggedIn()
+{
+     if(!inWordpress()) {
+	  return(false);
+     }
+
+     // at this point, we must be running within Wordpress, so go
+     // ahead and do the standard check to see if the user is logged
+     // in (somewhat defensive programming here)
+
+     $current_user = wp_get_current_user();
+     if ( !($current_user instanceof WP_User) || $current_user->ID == 0) {
+	  return(false);
+     }
+
+     // user is logged in
+
+     return(true);
+}
+
+
+?>

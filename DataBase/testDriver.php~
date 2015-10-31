@@ -1,0 +1,18 @@
+<?php
+
+include("dbFunctions.php");
+
+function main()
+{
+//     $rows = dbGetPackages();
+//     $rows = dbGetPersonalities();
+//     $rows = dbGetOrder(24);
+//     $rows = dbGetItems(31);
+     $rows = dbGetOrderCustomer(2);
+
+     print_r($rows);
+}
+
+main();
+
+?>

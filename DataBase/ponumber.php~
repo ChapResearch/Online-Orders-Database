@@ -1,0 +1,35 @@
+<?php
+  //
+  // ponumber.php
+  //
+  // This function simply finds the PO number in any of the applicable fields of the
+  // given data.  Returns NULL if no PO number was found, otherwise the PO number
+  // will be in there - with no adornment.
+  //
+  // Format for finding PO numbers is "[PO: <number>]" where the <number> can be
+  // anything WITHOUT spaces or the square bracket.
+  //
+  // This routine looks at the $data array in the listed fields.  If multiple PO numbers
+  // are seen, they are all returned, separated by spaces.
+  //
+
+function findPONumber($data)
+{
+     $targetFields = array( "CustomerONotes", "AdminONotes", "CustomerCNotes", "AdminCNotes" );
+     $pattern = "+\[PO: [^\] 	]\]+"; 
+     $returnPOs = array();
+
+     foreach($targetFields as $field) {
+	  if(array_key_exists($field,$data)) {
+	       if(preg_match($pattern,$data[$field],$matches)) {
+		    array_merge($returnPOs,$matches[1]);
+	       }
+	  }
+     }
+
+     if(length($returnPOs) == 0) {
+	  return(NULL);
+     } else {
+	  return($returnPOs);
+     }
+}

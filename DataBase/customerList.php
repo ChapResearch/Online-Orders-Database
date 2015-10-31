@@ -1,0 +1,137 @@
+<?php
+
+  // customerList.php 
+  // 
+  // contains methods for filling the table under "Manage Customers". The
+  // populateListCustomersSummary() method is meant to be called by the WordPress
+  // page. It pulls the most relevant customer data from the database, formats
+  // them into rows and gives sorting capabilities (by headers), as well as editing
+  // capabilities (by clicking on the row).
+
+include('dbFunctions.php');
+
+//
+// sortHeader() - a little helper function to format a header with sorting.
+//
+function sortHeader($basepage,$label,$field,$fieldNow,$reverseNow)
+{
+     $retVal = "<a href=\"$basepage&sort=$field";
+     if($fieldNow == $field && !$reverseNow) {
+	  $retVal .= "&reverse";
+     }
+     if($fieldNow == $field) {
+	  $retVal .= "\"><strong>$label</strong></a>";
+     } else {
+	  $retVal .= "\">$label</a>";
+     }
+
+     return($retVal);
+}
+
+function populateListCustomersSummary($linkPage, $sort = "MetDate",$reverse = false)
+{
+
+  // change these if Wordpress location changes
+  $base = "http://orders.thechapr.com/Admin";
+  
+  $basepage = "?page_id=" . $_GET["page_id"];
+
+  $rows = dbGetCustomersSummary($sort,$reverse); 
+
+  $list = "";
+
+  $list .= '<script>
+               // code taken from http://stackoverflow.com/questions/133925/javascript-post-request-like-a-form-submit
+               function post(path, params, method) {
+                  method = method || "post"; // Set method to post by default if not specified.
+
+                  var form = document.createElement("form");
+                  form.setAttribute("method", method);
+                  form.setAttribute("action", path);
+
+                  for(var key in params) {
+                     if(params.hasOwnProperty(key)) {
+                        var hiddenField = document.createElement("input");
+                        hiddenField.setAttribute("type", "hidden");
+                        hiddenField.setAttribute("name", key);
+                        hiddenField.setAttribute("value", params[key]);
+ 
+                        form.appendChild(hiddenField);
+                     }
+                  }
+
+                  document.body.appendChild(form);
+                  form.submit();
+               }';
+  $list .= "
+               function rowClick(cid) {
+                  window.location.href = \"$linkPage\" + \"&CID=\" + cid;
+               }
+               </script>";
+     
+     $list .= "
+<table class=\"customerList\" frame=\"box\" style=\"width:95%;align:center\">
+   <tr class=\"topline\">
+      <td align=\"center\"><font size=\"-2\">" . sortHeader($basepage,"CID","CID",$sort,$reverse) . "</td>
+      <td align=\"center\"><font size=\"-2\">" . sortHeader($basepage,"OID","OID",$sort,$reverse) . "</td>
+      <td align=\"center\">" . sortHeader($basepage,"Met Date","MetDate",$sort,$reverse) . "</td>
+      <td align=\"center\">" . sortHeader($basepage,"Title","Title",$sort,$reverse) . "</td>
+      <td align=\"center\">" . sortHeader($basepage,"First Name","FirstName",$sort,$reverse) . "</td>
+      <td align=\"center\">" . sortHeader($basepage,"Last Name","LastName",$sort,$reverse) . "</td>
+      <td align=\"center\">" . sortHeader($basepage,"City","City",$sort,$reverse) . "</td>
+      <td align=\"center\">" . sortHeader($basepage,"State","State",$sort,$reverse) . "</td>
+      <td align=\"center\">" . sortHeader($basepage,"Country","Country",$sort,$reverse) . "</td>
+      <td align=\"center\">" . sortHeader($basepage,"Customer Notes","CustomerCNotes",$sort,$reverse) . "</td>
+   </tr>
+
+";
+
+  foreach($rows as $row) {
+    $cid = $row["CID"];
+    $oid = "";
+    if ($row["OID"] != null){
+      foreach ($row["OID"] as $r){
+	foreach ($r as $i){
+	  $oid .= $i . " ";
+	}
+      }
+    }
+    $title = $row["Title"];
+    $firstName = $row["FirstName"];
+    $lastName = $row["LastName"];
+    $city = $row["City"];
+    $state = $row["State"];
+    $country = $row["Country"];
+    $customerCNotes = $row["CustomerCNotes"];
+    $metDate = date("m", $row["MetDate"]) . "/" . date("d", $row["MetDate"]) . "/" . date("y", $row["MetDate"]);
+
+    $list .= "<tr onclick=\"rowClick($cid);\">";
+
+    $list .= "
+      <td class='centered' align='center'> $cid </td>
+      <td align='center'> $oid </td>
+      <td align='center'> $metDate </td>
+      <td> $title </td>
+      <td> $firstName </td>
+      <td> $lastName </td>
+      <td align='center'> $city </td>
+      <td align='center'> $state </td>
+      <td align='center'> $country </td>
+      <td align='center'> $customerCNotes </td>
+   </tr>
+";
+  }
+
+  $list .= " 
+
+</table>
+<div align=\"center\"><font size=\"-1\"><em>
+Click on a row to view or edit the customer.
+</em></font></div>
+";
+
+ print($list);
+
+}
+
+?>
